@@ -5,8 +5,7 @@ from django.utils import timezone
 
 class Product(models.Model):
     """
-    Модель продукта, которая теперь НЕ содержит связь с узлами сети.
-    Продукты будут связаны через промежуточную модель NetworkNodeProduct.
+    Модель продукта
     """
     name = models.CharField(max_length=255, verbose_name='Название')
     model = models.CharField(max_length=255, verbose_name='Модель')
@@ -113,11 +112,33 @@ class NetworkNode(models.Model):
         """Получение информации о продуктах узла"""
         return self.networknodeproduct_set.select_related('product')
 
+    def get_available_products_from_supplier(self):
+        """Получить продукты, доступные у поставщика"""
+        if self.supplier:
+            return self.supplier.products.all()
+        return Product.objects.none()
+
+    def add_product_from_supplier(self, product_id, my_price, quantity):
+        """Добавить продукт от поставщика"""
+        if not self.supplier:
+            raise ValueError("Нет поставщика")
+
+        # Проверяем что продукт есть у поставщика
+        if not self.supplier.products.filter(id=product_id).exists():
+            raise ValueError("Продукта нет у поставщика")
+
+        product = Product.objects.get(id=product_id)
+        return NetworkNodeProduct.objects.create(
+            network_node=self,
+            product=product,
+            price=my_price,
+            quantity=quantity
+        )
+
 
 class NetworkNodeProduct(models.Model):
     """
     Промежуточная модель для связи узла сети с продуктами.
-    Позволяет добавить дополнительную информацию о продукте в контексте узла.
     """
     network_node = models.ForeignKey(
         NetworkNode,
@@ -156,3 +177,29 @@ class NetworkNodeProduct(models.Model):
 
     def __str__(self):
         return f"{self.product.name} в {self.network_node.name}"
+
+    def get_supplier_price(self):
+        """Получить цену этого продукта у поставщика"""
+        if self.network_node.supplier:
+            try:
+                supplier_product = NetworkNodeProduct.objects.get(
+                    network_node=self.network_node.supplier,
+                    product=self.product
+                )
+                return supplier_product.price
+            except NetworkNodeProduct.DoesNotExist:
+                return None
+        return None
+
+    def get_supplier_quantity(self):
+        """Получить количество этого продукта у поставщика"""
+        if self.network_node.supplier:
+            try:
+                supplier_product = NetworkNodeProduct.objects.get(
+                    network_node=self.network_node.supplier,
+                    product=self.product
+                )
+                return supplier_product.quantity
+            except NetworkNodeProduct.DoesNotExist:
+                return 0
+        return 0
