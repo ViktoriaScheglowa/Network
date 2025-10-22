@@ -110,6 +110,19 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
         Очистка задолженности для конкретного узла.
         """
         node = self.get_object()
+
+        if node.debt == 0:
+            return Response(
+                {'error': 'Задолженность уже равна нулю'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if node.debt < 0:
+            return Response(
+                {'error': 'Некорректная задолженность'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         node.debt = 0
         node.save()
 

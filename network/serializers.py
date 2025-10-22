@@ -60,11 +60,7 @@ class NetworkNodeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NetworkNode
-        fields = [
-            'id', 'name', 'node_type', 'email', 'country', 'city',
-            'street', 'house_number', 'supplier', 'debt', 'is_active',
-            'products'
-        ]
+        fields = '__all__'
         read_only_fields = ['debt']
 
     def create(self, validated_data):
