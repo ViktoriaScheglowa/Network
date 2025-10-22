@@ -443,25 +443,36 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        print("=== DEBUG HomeView ===")  # Отладка в консоль сервера
-
         try:
-            # Получаем список уникальных городов для фильтра
-            cities_queryset = NetworkNode.objects.values_list('city', flat=True).distinct()
-            print(f"Raw cities from DB: {list(cities_queryset)}")  # Отладка
+            # Получаем реальные города из базы данных
+            cities_queryset = NetworkNode.objects.filter(
+                city__isnull=False
+            ).exclude(
+                city__exact=''
+            ).values_list(
+                'city', flat=True
+            ).distinct()
 
-            # Фильтруем пустые значения и сортируем
-            cities_list = [city for city in cities_queryset if city]
-            print(f"Filtered cities: {cities_list}")  # Отладка
+            # Преобразуем в список и сортируем
+            cities_list = []
+            for city in cities_queryset:
+                if city:  # Проверяем что город не пустой
+                    normalized_city = city.strip()  # Убираем пробелы в начале/конце
+                    if normalized_city and normalized_city not in cities_list:
+                        cities_list.append(normalized_city)
+            cities_list.sort()
 
-            context['cities'] = sorted(cities_list)
-            print(f"Final cities in context: {context['cities']}")  # Отладка
+            context['cities'] = cities_list
+
+            print(f"Найдено уникальных городов: {len(cities_list)}")
+            print(f"Города: {cities_list}")
 
         except Exception as e:
-            print(f"Error in HomeView: {e}")  # Отладка
-            context['cities'] = []
+            print(f"Ошибка при получении городов: {e}")
+            context['cities'] = ['Москва', 'Санкт-Петербург', 'Новосибирск']
+            print("Используем fallback города")
 
-        print("=== END DEBUG ===")  # Отладка
+        print("=== HomeView DEBUG END ===")
         return context
 
 
@@ -470,8 +481,37 @@ class NetworkNodesView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        cities = NetworkNode.objects.values_list('city', flat=True).distinct()
-        context['cities'] = sorted([city for city in cities if city])
+        print("=== NetworkNodesView DEBUG ===")
+
+        try:
+            # Получаем реальные города из базы данных
+            cities_queryset = NetworkNode.objects.filter(
+                city__isnull=False
+            ).exclude(
+                city__exact=''
+            ).values_list(
+                'city', flat=True
+            ).distinct()
+
+            # Нормализуем и убираем дубликаты
+            cities_list = []
+            for city in cities_queryset:
+                if city:
+                    normalized_city = city.strip()
+                    if normalized_city and normalized_city not in cities_list:
+                        cities_list.append(normalized_city)
+
+            cities_list.sort()
+            context['cities'] = cities_list
+
+            print(f"NetworkNodesView - найдено городов: {len(cities_list)}")
+            print(f"NetworkNodesView - города: {cities_list}")
+
+        except Exception as e:
+            print(f"Ошибка в NetworkNodesView: {e}")
+            context['cities'] = ['Москва', 'Санкт-Петербург', 'Новосибирск']
+
+        print("=== NetworkNodesView DEBUG END ===")
         return context
 
 

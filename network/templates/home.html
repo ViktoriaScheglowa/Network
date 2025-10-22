@@ -48,8 +48,6 @@
                 <option value="">Все города</option>
                 {% for city in cities %}
                 <option value="{{ city }}">{{ city }}</option>
-                {% empty %}
-                <option value="">Нет данных о городах</option>
                 {% endfor %}
             </select>
         </div>
