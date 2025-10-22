@@ -3,9 +3,27 @@ from django.db import models
 
 
 class User(AbstractUser):
-    """Кастомная модель пользователя с дополнительными полями для сотрудников"""
+    """Модель пользователя с дополнительными полями для сотрудников"""
 
-    # Дополнительные поля для сотрудников
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='Группы, к которым принадлежит пользователь. '
+                  'Пользователь получит все разрешения, '
+                  'предоставленные каждой из его групп.',
+        related_name='custom_user_set',
+        related_query_name='user',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Особые разрешения для этого пользователя.',
+        related_name='custom_user_set',
+        related_query_name='user',
+    )
+
     is_employee = models.BooleanField(
         default=True,
         verbose_name='Является сотрудником'
@@ -42,4 +60,3 @@ class User(AbstractUser):
     def is_active_employee(self):
         """Проверка, является ли пользователь активным сотрудником"""
         return self.is_active and self.is_employee
-    

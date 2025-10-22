@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Узлы сети - Electronics Network{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/network_nodes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Узлы сети</h1>
+    <p>Просмотр и управление всеми узлами сети</p>
+</div>
+
+<div class="filters-section">
+    <div class="filter-group">
+        <label for="type-filter">Тип узла:</label>
+        <select id="type-filter" class="filter-select">
+            <option value="">Все типы</option>
+            <option value="factory">Завод</option>
+            <option value="retail">Розничная сеть</option>
+            <option value="entrepreneur">Индивидуальный предприниматель</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label for="city-filter">Город:</label>
+        <select id="city-filter" class="filter-select">
+            <option value="">Все города</option>
+            {% for city in cities %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% empty %}
+            <option value="">Нет данных о городах</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <label for="search-filter">Поиск:</label>
+        <input type="text" id="search-filter" placeholder="Название, email..." class="filter-input">
+    </div>
+
+    <button id="apply-filters" class="btn-primary">Применить</button>
+    <button id="reset-filters" class="btn-secondary">Сбросить</button>
+</div>
+
+<div class="nodes-table-container">
+    <table class="nodes-table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Тип</th>
+                <th>Город</th>
+                <th>Страна</th>
+                <th>Email</th>
+                <th>Задолженность</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody id="nodes-table-body">
+            <!-- Данные будут загружены через JavaScript -->
+        </tbody>
+    </table>
+    <div id="table-loading" class="loading">Загрузка данных...</div>
+    <div id="table-no-data" class="no-data" style="display: none;">
+        Узлы не найдены
+    </div>
+</div>
+
+<!-- Модальное окно для деталей узла -->
+<div id="node-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modal-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/network_nodes.js' %}"></script>
+{% endblock %}

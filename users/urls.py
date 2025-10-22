@@ -1,10 +1,12 @@
+from django.contrib.auth.views import LogoutView
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from . import views
+from .views import UserViewSet, CustomLoginView, email_verification
+from django.contrib.auth import views as auth_views
 
-router = DefaultRouter()
-router.register(r'users', views.UserViewSet, basename='user')
+app_name = 'users'
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("login/", CustomLoginView.as_view(), name="login"),
+    path("logout/", auth_views.LogoutView.as_view(next_page="/"), name="logout"),
+
 ]

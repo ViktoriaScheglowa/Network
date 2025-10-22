@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Продукты - Electronics Network{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/products.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Продукты</h1>
+    <p>Управление продуктами в сети</p>
+</div>
+
+<div class="filters-section">
+    <div class="filter-group">
+        <label for="search-filter">Поиск:</label>
+        <input type="text" id="search-filter" placeholder="Название, модель..." class="filter-input">
+    </div>
+
+    <div class="filter-group">
+        <label for="node-filter">Узел сети:</label>
+        <select id="node-filter" class="filter-select">
+            <option value="">Все узлы</option>
+            <!-- Опции будут заполнены через JavaScript -->
+        </select>
+    </div>
+
+    <button id="apply-filters" class="btn-primary">Применить</button>
+    <button id="reset-filters" class="btn-secondary">Сбросить</button>
+</div>
+
+<div class="products-grid" id="products-container">
+    <!-- Продукты будут загружены через JavaScript -->
+</div>
+
+<div id="loading-message" class="loading">Загрузка продуктов...</div>
+<div id="no-products-message" class="no-data" style="display: none;">
+    Продукты не найдены
+</div>
+
+<!-- Модальное окно для деталей продукта -->
+<div id="product-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modal-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/products.js' %}"></script>
+{% endblock %}

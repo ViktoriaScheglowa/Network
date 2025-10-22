@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Главная - Electronics Network{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1>Добро пожаловать в Electronics Network</h1>
+    <p>Управление сетью по продаже электроники с иерархической структурой поставщиков</p>
+</div>
+
+<div class="stats-section" id="stats">
+    <h2>Статистика сети</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">🏭</div>
+            <div class="stat-number" id="factories-count">0</div>
+            <div class="stat-label">Заводов</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🏪</div>
+            <div class="stat-number" id="retail-count">0</div>
+            <div class="stat-label">Розничных сетей</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👨‍💼</div>
+            <div class="stat-number" id="entrepreneurs-count">0</div>
+            <div class="stat-label">Предпринимателей</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-number" id="total-nodes">0</div>
+            <div class="stat-label">Всего узлов</div>
+        </div>
+    </div>
+</div>
+
+<div class="filter-section">
+    <h2>Фильтр по городам</h2>
+    <div class="filter-controls">
+        <div class="filter-group">
+            <label for="city-filter" class="filter-label">Выберите город:</label>
+            <select id="city-filter" class="filter-select">
+                <option value="">Все города</option>
+                {% for city in cities %}
+                <option value="{{ city }}">{{ city }}</option>
+                {% empty %}
+                <option value="">Нет данных о городах</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-buttons">
+            <button id="apply-filter" class="btn-primary">Применить фильтр</button>
+            <button id="reset-filter" class="btn-secondary">Сбросить</button>
+        </div>
+    </div>
+</div>
+
+<div class="nodes-section">
+    <h2>Узлы сети</h2>
+    <div id="nodes-container" class="nodes-grid">
+        <!-- Узлы будут загружены через JavaScript -->
+    </div>
+    <div id="loading-message" class="loading">Загрузка данных...</div>
+    <div id="no-nodes-message" class="no-data" style="display: none;">
+        Узлы не найдены
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/home.js' %}"></script>
+{% endblock %}

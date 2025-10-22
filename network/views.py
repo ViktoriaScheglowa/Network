@@ -1,5 +1,7 @@
+from django.views.generic import TemplateView
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -12,7 +14,7 @@ from .serializers import (
     NetworkNodeProductSerializer
 )
 from .filters import NetworkNodeFilter
-from .permissions import IsActiveEmployee
+from .permissions import IsActiveEmployee, IsManager, IsAdmin
 
 
 class NetworkNodeViewSet(viewsets.ModelViewSet):
@@ -31,8 +33,20 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
             'networknodeproduct_set__product'
         )
 
-        # Дополнительная фильтрация по уровню иерархии
-        level = self.request.query_params.get('level', None)
+        # Получаем параметры фильтрации
+        node_type = self.request.query_params.get('node_type')
+        city = self.request.query_params.get('city')
+        level = self.request.query_params.get('level')
+        search = self.request.query_params.get('search')
+
+        # Применяем фильтры в правильном порядке
+        if node_type:
+            queryset = queryset.filter(node_type=node_type)
+
+        if city:
+            queryset = queryset.filter(city__iexact=city)
+
+        # Фильтрация по уровню иерархии
         if level is not None:
             if level == '0':
                 queryset = queryset.filter(supplier__isnull=True)
@@ -41,12 +55,24 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
             elif level == '2':
                 queryset = queryset.filter(supplier__supplier__isnull=False)
 
-        # Фильтрация по типу узла
-        node_type = self.request.query_params.get('node_type', None)
-        if node_type:
-            queryset = queryset.filter(node_type=node_type)
+        # Поиск по нескольким полям
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(email__icontains=search) |
+                Q(city__icontains=search) |
+                Q(country__icontains=search)
+            )
 
         return queryset
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'destroy']:
+            return [IsAuthenticated(), IsManager()]
+        elif self.action in ['clear_debt', 'add_product']:
+            return [IsAuthenticated(), IsManager()]
+        else:
+            return [IsAuthenticated(), IsActiveEmployee()]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -294,6 +320,14 @@ class ProductViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'model', 'release_date', 'created_at']
     ordering = ['name']
 
+    def get_permissions(self):
+        if self.action in ['create', 'destroy']:
+            return [IsAuthenticated(), IsAdmin()]
+        elif self.action in ['update', 'assign_to_node']:
+            return [IsAuthenticated(), IsManager()]
+        else:
+            return [IsAuthenticated(), IsActiveEmployee()]
+
     @action(detail=True, methods=['post'])
     def assign_to_node(self, request, pk=None):
         """
@@ -401,3 +435,45 @@ class NetworkNodeProductViewSet(viewsets.ModelViewSet):
     search_fields = ['product__name', 'product__model', 'network_node__name']
     ordering_fields = ['price', 'quantity', 'added_at']
     ordering = ['-added_at']
+
+
+class HomeView(TemplateView):
+    template_name = 'home.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        print("=== DEBUG HomeView ===")  # Отладка в консоль сервера
+
+        try:
+            # Получаем список уникальных городов для фильтра
+            cities_queryset = NetworkNode.objects.values_list('city', flat=True).distinct()
+            print(f"Raw cities from DB: {list(cities_queryset)}")  # Отладка
+
+            # Фильтруем пустые значения и сортируем
+            cities_list = [city for city in cities_queryset if city]
+            print(f"Filtered cities: {cities_list}")  # Отладка
+
+            context['cities'] = sorted(cities_list)
+            print(f"Final cities in context: {context['cities']}")  # Отладка
+
+        except Exception as e:
+            print(f"Error in HomeView: {e}")  # Отладка
+            context['cities'] = []
+
+        print("=== END DEBUG ===")  # Отладка
+        return context
+
+
+class NetworkNodesView(TemplateView):
+    template_name = 'network_nodes.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cities = NetworkNode.objects.values_list('city', flat=True).distinct()
+        context['cities'] = sorted([city for city in cities if city])
+        return context
+
+
+class ProductsView(TemplateView):
+    template_name = 'products.html'

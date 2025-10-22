@@ -4,11 +4,23 @@ from .models import NetworkNode, Product, NetworkNodeProduct
 
 class ProductSerializer(serializers.ModelSerializer):
     """Serializer для продуктов"""
+    network_nodes = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'model', 'release_date', 'created_at']
+        fields = ['id', 'name', 'model', 'release_date', 'created_at', 'network_nodes']
         read_only_fields = ['created_at']
+
+    def get_network_nodes(self, obj):
+        # Получаем информацию о узлах, где есть этот продукт
+        node_products = obj.networknodeproduct_set.select_related('network_node').all()
+        return [{
+            'node_id': np.network_node.id,
+            'node_name': np.network_node.name,
+            'price': float(np.price) if np.price else 0,
+            'quantity': np.quantity,
+            'is_available': np.is_available
+        } for np in node_products]
 
 
 class NetworkNodeProductSerializer(serializers.ModelSerializer):
