@@ -15,20 +15,14 @@
 
 <div class="filters-section">
     <div class="filter-group">
-        <label for="search-filter">Поиск:</label>
-        <input type="text" id="search-filter" placeholder="Название, модель..." class="filter-input">
+        <label for="search-filter">Поиск по названию или модели:</label>
+        <input type="text" id="search-filter" placeholder="Введите название продукта или модель..." class="filter-input">
     </div>
 
-    <div class="filter-group">
-        <label for="node-filter">Узел сети:</label>
-        <select id="node-filter" class="filter-select">
-            <option value="">Все узлы</option>
-            <!-- Опции будут заполнены через JavaScript -->
-        </select>
+    <div class="filter-buttons">
+        <button id="apply-filters" class="btn-primary">Применить фильтр</button>
+        <button id="reset-filters" class="btn-secondary">Сбросить</button>
     </div>
-
-    <button id="apply-filters" class="btn-primary">Применить</button>
-    <button id="reset-filters" class="btn-secondary">Сбросить</button>
 </div>
 
 <div class="products-grid" id="products-container">

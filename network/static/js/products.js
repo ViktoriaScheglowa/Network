@@ -1,46 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    loadNetworkNodes(); // Сначала загружаем узлы для фильтра
     loadProducts();
     setupEventListeners();
 });
-
-let networkNodes = []; // Глобальная переменная для хранения узлов
-
-// Загрузка списка узлов сети для фильтра
-function loadNetworkNodes() {
-    fetch('/api/network-nodes/')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            networkNodes = data.results || data;
-            populateNodeFilter();
-        })
-        .catch(error => {
-            console.error('Error loading network nodes:', error);
-        });
-}
-
-// Заполнение фильтра узлов
-function populateNodeFilter() {
-    const nodeFilter = document.getElementById('node-filter');
-
-    // Очищаем существующие опции (кроме первой)
-    while (nodeFilter.children.length > 1) {
-        nodeFilter.removeChild(nodeFilter.lastChild);
-    }
-
-    // Добавляем узлы в фильтр
-    networkNodes.forEach(node => {
-        const option = document.createElement('option');
-        option.value = node.id;
-        option.textContent = `${node.name} (${getNodeTypeDisplay(node.node_type)})`;
-        nodeFilter.appendChild(option);
-    });
-}
 
 // Загрузка продуктов
 function loadProducts(filters = {}) {
@@ -65,6 +26,8 @@ function loadProducts(filters = {}) {
         url += '?' + params.toString();
     }
 
+    console.log('Fetching products from:', url);
+
     // Загружаем данные с API
     fetch(url)
         .then(response => {
@@ -74,30 +37,19 @@ function loadProducts(filters = {}) {
             return response.json();
         })
         .then(data => {
-            // Если выбран узел в фильтре, фильтруем продукты по узлу
-            if (filters.node_id) {
-                data = filterProductsByNode(data, filters.node_id);
-            }
-            displayProducts(data.results || data);
+            console.log('Received products data:', data);
+
+            // Обрабатываем как пагинированные, так и непагинированные данные
+            const products = data.results || data;
+            displayProducts(products);
         })
         .catch(error => {
             console.error('Error loading products:', error);
-            showError('Ошибка загрузки данных');
+            showError('Ошибка загрузки данных: ' + error.message);
         })
         .finally(() => {
             loadingElement.style.display = 'none';
         });
-}
-
-// Фильтрация продуктов по узлу сети
-function filterProductsByNode(products, nodeId) {
-    return products.filter(product => {
-        // Проверяем, есть ли продукт в указанном узле
-        if (product.network_nodes && product.network_nodes.length > 0) {
-            return product.network_nodes.some(node => node.node_id == nodeId);
-        }
-        return false;
-    });
 }
 
 // Отображение продуктов
@@ -117,7 +69,7 @@ function displayProducts(products) {
         <div class="product-card">
             <div class="product-header">
                 <div class="product-name">${escapeHtml(product.name)}</div>
-                <div class="product-model">${escapeHtml(product.model)}</div>
+                <div class="product-model">${escapeHtml(product.model || '')}</div>
             </div>
             <div class="product-details">
                 <div class="product-detail">
@@ -132,18 +84,18 @@ function displayProducts(products) {
             <div class="product-nodes">
                 <h4>Доступен в узлах:</h4>
                 <div class="nodes-list">
-                    ${product.network_nodes.slice(0, 3).map(node => `
+                    ${product.network_nodes.slice(0, 5).map(node => `
                         <div class="node-item">
                             <div class="node-info">
-                                ${escapeHtml(node.node_name)}
-                                ${node.is_available ? '✅' : '❌'}
+                                <span class="node-name">${escapeHtml(node.node_name)}</span>
+                                <span class="node-status">${node.is_available ? '✅' : '❌'}</span>
                             </div>
                             <div class="node-price">${parseFloat(node.price || 0).toFixed(2)} ₽</div>
                         </div>
                     `).join('')}
-                    ${product.network_nodes.length > 3 ? `
+                    ${product.network_nodes.length > 5 ? `
                         <div class="node-item">
-                            <div class="node-info">... и еще ${product.network_nodes.length - 3} узлов</div>
+                            <div class="node-info">... и еще ${product.network_nodes.length - 5} узлов</div>
                         </div>
                     ` : ''}
                 </div>
@@ -156,7 +108,7 @@ function displayProducts(products) {
 
             <div class="product-actions">
                 <button class="action-btn view" onclick="viewProductDetails(${product.id})">
-                    Просмотр
+                    Подробнее
                 </button>
                 <button class="action-btn assign" onclick="assignProductToNode(${product.id})">
                     Назначить узлу
@@ -167,15 +119,6 @@ function displayProducts(products) {
 }
 
 // Вспомогательные функции
-function getNodeTypeDisplay(nodeType) {
-    const types = {
-        'factory': 'Завод',
-        'retail': 'Розничная сеть',
-        'entrepreneur': 'Индивидуальный предприниматель'
-    };
-    return types[nodeType] || nodeType;
-}
-
 function escapeHtml(unsafe) {
     if (unsafe === null || unsafe === undefined) return '';
     return unsafe
@@ -189,8 +132,12 @@ function escapeHtml(unsafe) {
 
 function formatDate(dateString) {
     if (!dateString) return 'Не указана';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU');
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU');
+    } catch (e) {
+        return 'Неверный формат';
+    }
 }
 
 // Настройка обработчиков событий
@@ -211,27 +158,21 @@ function setupEventListeners() {
             applyFilters();
         }
     });
-
-    // Автозагрузка при изменении фильтров
-    document.getElementById('node-filter').addEventListener('change', function() {
-        applyFilters();
-    });
 }
 
 // Применение фильтров
 function applyFilters() {
     const filters = {
-        search: document.getElementById('search-filter').value.trim(),
-        node_id: document.getElementById('node-filter').value
+        search: document.getElementById('search-filter').value.trim()
     };
 
+    console.log('Applying filters:', filters);
     loadProducts(filters);
 }
 
 // Сброс фильтров
 function resetFilters() {
     document.getElementById('search-filter').value = '';
-    document.getElementById('node-filter').value = '';
     loadProducts();
 }
 
@@ -264,24 +205,33 @@ function viewProductDetails(productId) {
 }
 
 function assignProductToNode(productId) {
-    if (networkNodes.length === 0) {
-        alert('Сначала нужно загрузить узлы сети');
-        return;
-    }
+    // Загружаем узлы сети для выбора
+    fetch('/api/network-nodes/')
+        .then(response => response.json())
+        .then(data => {
+            const nodes = data.results || data;
+            if (nodes.length === 0) {
+                alert('Нет доступных узлов сети');
+                return;
+            }
 
-    // Создаем простое модальное окно для назначения продукта
-    const nodeList = networkNodes.map(node =>
-        `${node.id}. ${node.name} (${getNodeTypeDisplay(node.node_type)})`
-    ).join('\n');
+            const nodeList = nodes.map(node =>
+                `${node.id}. ${node.name} (${getNodeTypeDisplay(node.node_type)})`
+            ).join('\n');
 
-    const nodeId = prompt(`Назначить продукт узлу сети. Введите ID узла:\n\n${nodeList}`);
+            const nodeId = prompt(`Назначить продукт узлу сети. Введите ID узла:\n\n${nodeList}`);
 
-    if (nodeId && !isNaN(nodeId)) {
-        const price = prompt('Введите цену продукта в этом узле:');
-        if (price && !isNaN(price)) {
-            assignProductToNodeAPI(productId, parseInt(nodeId), parseFloat(price));
-        }
-    }
+            if (nodeId && !isNaN(nodeId)) {
+                const price = prompt('Введите цену продукта в этом узле:');
+                if (price && !isNaN(price)) {
+                    assignProductToNodeAPI(productId, parseInt(nodeId), parseFloat(price));
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading network nodes:', error);
+            alert('Ошибка загрузки узлов сети');
+        });
 }
 
 function assignProductToNodeAPI(productId, nodeId, price) {
@@ -336,6 +286,16 @@ function getCSRFToken() {
     return cookieValue;
 }
 
+// Вспомогательная функция для отображения типа узла
+function getNodeTypeDisplay(nodeType) {
+    const types = {
+        'factory': 'Завод',
+        'retail': 'Розничная сеть',
+        'entrepreneur': 'Индивидуальный предприниматель'
+    };
+    return types[nodeType] || nodeType;
+}
+
 // Модальное окно для деталей продукта
 function showProductModal(product) {
     const modal = document.getElementById('product-modal');
@@ -346,7 +306,7 @@ function showProductModal(product) {
         <div class="modal-details">
             <div class="modal-detail">
                 <span class="detail-label">Модель:</span>
-                <span class="detail-value">${escapeHtml(product.model)}</span>
+                <span class="detail-value">${escapeHtml(product.model || '')}</span>
             </div>
             <div class="modal-detail">
                 <span class="detail-label">Дата выхода:</span>
@@ -364,14 +324,14 @@ function showProductModal(product) {
 
         ${product.network_nodes && product.network_nodes.length > 0 ? `
         <div class="modal-section">
-            <h4>Доступен в узлах:</h4>
+            <h4>Доступен в узлах (${product.network_nodes.length}):</h4>
             <div class="nodes-list-modal">
                 ${product.network_nodes.map(node => `
                     <div class="node-item-modal">
                         <div class="node-info-modal">
                             <strong>${escapeHtml(node.node_name)}</strong>
                             <br>
-                            <small>${getNodeTypeDisplay(getNodeTypeById(node.node_id))} • ${node.is_available ? 'Доступен' : 'Не доступен'}</small>
+                            <small>${getNodeTypeDisplay(node.node_type)} • ${node.is_available ? 'Доступен' : 'Не доступен'}</small>
                         </div>
                         <div class="node-details-modal">
                             <div>Цена: ${parseFloat(node.price || 0).toFixed(2)} ₽</div>
@@ -389,12 +349,6 @@ function showProductModal(product) {
     `;
 
     modal.style.display = 'block';
-}
-
-// Получение типа узла по ID
-function getNodeTypeById(nodeId) {
-    const node = networkNodes.find(n => n.id == nodeId);
-    return node ? node.node_type : 'unknown';
 }
 
 // Закрытие модального окна

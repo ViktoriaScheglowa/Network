@@ -315,10 +315,23 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsActiveEmployee]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'model']
     ordering_fields = ['name', 'model', 'release_date', 'created_at']
     ordering = ['name']
+
+    def get_queryset(self):
+        queryset = Product.objects.all()
+
+        # Только поиск по названию и модели
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(model__icontains=search)
+            )
+
+        return queryset
 
     def get_permissions(self):
         if self.action in ['create', 'destroy']:
