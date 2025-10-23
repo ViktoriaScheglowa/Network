@@ -6,10 +6,21 @@ from .models import NetworkNode, Product, NetworkNodeProduct
 @admin.register(NetworkNode)
 class NetworkNodeAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'node_type', 'city', 'country',
-        'supplier_link', 'hierarchy_level', 'debt', 'created_at'
+        'name',
+        'node_type',
+        'city',
+        'country',
+        'supplier_link',  # Ссылка на поставщика
+        'hierarchy_level',
+        'debt',
+        'created_at'
     ]
-    list_filter = ['city', 'country', 'node_type', 'created_at']
+    list_filter = [
+        'city',  # Фильтр по названию города
+        'country',
+        'node_type',
+        'created_at'
+    ]
     search_fields = ['name', 'email', 'city', 'country']
     readonly_fields = ['created_at', 'hierarchy_level']
 
@@ -31,15 +42,14 @@ class NetworkNodeAdmin(admin.ModelAdmin):
     actions = ['clear_debt_action']
 
     def supplier_link(self, obj):
+        """Ссылка на поставщика - простой и надежный вариант"""
         if obj.supplier:
-            return format_html(
-                '<a href="/admin/electronics/networknode/{}/change/">{}</a>',
-                obj.supplier.id,
-                obj.supplier.name
-            )
+            url = f'/admin/network/networknode/{obj.supplier.id}/change/'
+            return format_html('<a href="{}">{}</a>', url, obj.supplier.name)
         return "-"
 
     supplier_link.short_description = 'Поставщик'
+    supplier_link.admin_order_field = 'supplier__name'
 
     def clear_debt_action(self, request, queryset):
         """Admin action для очистки задолженности"""
