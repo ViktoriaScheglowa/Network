@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 from .models import NetworkNode, Product, NetworkNodeProduct
 
@@ -10,17 +10,18 @@ class NetworkNodeAdmin(admin.ModelAdmin):
         'node_type',
         'city',
         'country',
-        'supplier_link',  # Ссылка на поставщика
+        'supplier_link',
         'hierarchy_level',
         'debt',
         'created_at'
     ]
     list_filter = [
-        'city',  # Фильтр по названию города
+        'city',
         'country',
         'node_type',
         'created_at'
     ]
+    list_editable = []
     search_fields = ['name', 'email', 'city', 'country']
     readonly_fields = ['created_at', 'hierarchy_level']
 
@@ -54,10 +55,12 @@ class NetworkNodeAdmin(admin.ModelAdmin):
     def clear_debt_action(self, request, queryset):
         """Admin action для очистки задолженности"""
         updated_count = queryset.update(debt=0)
-        self.message_user(
-            request,
-            f'Задолженность очищена для {updated_count} объектов'
-        )
+        if updated_count == 1:
+            message = 'Задолженность очищена для 1 объекта'
+        else:
+            message = f'Задолженность очищена для {updated_count} объектов'
+
+        self.message_user(request, message, messages.SUCCESS)
 
     clear_debt_action.short_description = 'Очистить задолженность перед поставщиком'
 

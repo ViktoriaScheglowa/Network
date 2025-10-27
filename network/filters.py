@@ -7,10 +7,12 @@ class NetworkNodeFilter(django_filters.FilterSet):
     city = django_filters.CharFilter(field_name='city', lookup_expr='icontains')
     node_type = django_filters.ChoiceFilter(choices=NetworkNode.NODE_TYPES)
     has_debt = django_filters.BooleanFilter(method='filter_has_debt')
+    supplier = django_filters.ModelChoiceFilter(queryset=NetworkNode.objects.all())
+    is_active = django_filters.BooleanFilter()
 
     class Meta:
         model = NetworkNode
-        fields = ['country', 'city', 'node_type', 'supplier']
+        fields = ['country', 'city', 'node_type', 'supplier', 'is_active']
 
     def filter_has_debt(self, queryset, name, value):
         if value:

@@ -1,5 +1,6 @@
+
 from django.views.generic import TemplateView
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -29,50 +30,17 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
     ordering = ['name']
 
     def get_queryset(self):
-        queryset = NetworkNode.objects.select_related('supplier').prefetch_related(
+        return NetworkNode.objects.select_related('supplier').prefetch_related(
             'networknodeproduct_set__product'
         )
 
-        # Получаем параметры фильтрации
-        node_type = self.request.query_params.get('node_type')
-        city = self.request.query_params.get('city')
-        level = self.request.query_params.get('level')
-        search = self.request.query_params.get('search')
-
-        # Применяем фильтры в правильном порядке
-        if node_type:
-            queryset = queryset.filter(node_type=node_type)
-
-        if city:
-            queryset = queryset.filter(city__iexact=city)
-
-        # Фильтрация по уровню иерархии
-        if level is not None:
-            if level == '0':
-                queryset = queryset.filter(supplier__isnull=True)
-            elif level == '1':
-                queryset = queryset.filter(supplier__supplier__isnull=True, supplier__isnull=False)
-            elif level == '2':
-                queryset = queryset.filter(supplier__supplier__isnull=False)
-
-        # Поиск по нескольким полям
-        if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(email__icontains=search) |
-                Q(city__icontains=search) |
-                Q(country__icontains=search)
-            )
-
-        return queryset
-
     def get_permissions(self):
-        if self.action in ['create', 'update', 'destroy']:
-            return [IsAuthenticated(), IsManager()]
-        elif self.action in ['clear_debt', 'add_product']:
-            return [IsAuthenticated(), IsManager()]
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsActiveEmployee(), IsManager()]
+        elif self.action in ['clear_debt', 'add_product', 'remove_product']:
+            return [IsActiveEmployee(), IsManager()]
         else:
-            return [IsAuthenticated(), IsActiveEmployee()]
+            return [IsActiveEmployee()]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -92,13 +60,13 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
     def _validate_hierarchy(self, instance):
         """Валидация иерархии сети"""
         if instance.supplier:
-            # Проверка на циклические связи
             current = instance.supplier
             visited = {instance.id}
 
             while current:
                 if current.id in visited:
-                    from rest_framework import serializers
+                    from django.db import transaction
+                    transaction.set_rollback(True)
                     raise serializers.ValidationError(
                         "Обнаружена циклическая связь в иерархии сети"
                     )
@@ -307,6 +275,42 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
             'products_count': supplier_products.count()
         })
 
+    def update(self, request, *args, **kwargs):
+        """Запрет обновления поля debt через API"""
+        # Удаляем debt из данных запроса перед обновлением
+        if 'debt' in request.data:
+            # Создаем копию данных без поля debt
+            data = request.data.copy()
+            data.pop('debt')
+
+            # Используем partial=True для PATCH запросов
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+
+        return super().update(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def by_country(self, request):
+        """
+        Фильтрация узлов по стране.
+        Пример: /api/network-nodes/by_country/?country=Россия
+        """
+        country = request.query_params.get('country')
+        if not country:
+            return Response(
+                {'error': 'Параметр country обязателен'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        nodes = self.get_queryset().filter(country__iexact=country)
+        serializer = self.get_serializer(nodes, many=True)
+        return Response(serializer.data)
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
@@ -335,11 +339,11 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'destroy']:
-            return [IsAuthenticated(), IsAdmin()]
-        elif self.action in ['update', 'assign_to_node']:
-            return [IsAuthenticated(), IsManager()]
+            return [IsActiveEmployee(), IsAdmin()]
+        elif self.action in ['update', 'partial_update', 'assign_to_node', 'remove_from_node']:
+            return [IsActiveEmployee(), IsManager()]
         else:
-            return [IsAuthenticated(), IsActiveEmployee()]
+            return [IsActiveEmployee()]
 
     @action(detail=True, methods=['post'])
     def assign_to_node(self, request, pk=None):

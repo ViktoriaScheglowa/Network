@@ -25,7 +25,7 @@ urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('network-nodes/', NetworkNodesView.as_view(), name='network_nodes'),
     path('products/', ProductsView.as_view(), name='products'),
-    path('users/', include('users.urls', namespace='users')),  # пространство имён users
+    path('users/', include('users.urls', namespace='users')),
 
 
     # API endpoints
