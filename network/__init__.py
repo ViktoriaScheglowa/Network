@@ -1,1 +1,1 @@
-default_app_config = 'network.apps.NetworkConfig'
+default_app_config = "network.apps.NetworkConfig"

@@ -8,9 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Проверяем, не существует ли уже суперпользователь
         if User.objects.filter(email="admin@admin.com").exists():
-            self.stdout.write(
-                self.style.WARNING("⚠️ Суперпользователь уже существует!")
-            )
+            self.stdout.write(self.style.WARNING("⚠️ Суперпользователь уже существует!"))
             return
 
         # Создаем суперпользователя
@@ -27,6 +25,4 @@ class Command(BaseCommand):
         super_user.set_password("1234qwer")
         super_user.save()
 
-        self.stdout.write(
-            self.style.SUCCESS("✅ Суперпользователь успешно создан!")
-        )
+        self.stdout.write(self.style.SUCCESS("✅ Суперпользователь успешно создан!"))

@@ -110,9 +110,6 @@ function displayProducts(products) {
                 <button class="action-btn view" onclick="viewProductDetails(${product.id})">
                     Подробнее
                 </button>
-                <button class="action-btn assign" onclick="assignProductToNode(${product.id})">
-                    Назначить узлу
-                </button>
             </div>
         </div>
     `).join('');
@@ -214,19 +211,6 @@ function assignProductToNode(productId) {
                 alert('Нет доступных узлов сети');
                 return;
             }
-
-            const nodeList = nodes.map(node =>
-                `${node.id}. ${node.name} (${getNodeTypeDisplay(node.node_type)})`
-            ).join('\n');
-
-            const nodeId = prompt(`Назначить продукт узлу сети. Введите ID узла:\n\n${nodeList}`);
-
-            if (nodeId && !isNaN(nodeId)) {
-                const price = prompt('Введите цену продукта в этом узле:');
-                if (price && !isNaN(price)) {
-                    assignProductToNodeAPI(productId, parseInt(nodeId), parseFloat(price));
-                }
-            }
         })
         .catch(error => {
             console.error('Error loading network nodes:', error);
@@ -259,14 +243,6 @@ function assignProductToNodeAPI(productId, nodeId, price) {
         }
         return response.json();
     })
-    .then(result => {
-        alert('Продукт успешно назначен узлу!');
-        loadProducts(); // Перезагружаем список
-    })
-    .catch(error => {
-        console.error('Error assigning product:', error);
-        alert('Ошибка назначения продукта узлу: ' + error.message);
-    });
 }
 
 // Получение CSRF токена

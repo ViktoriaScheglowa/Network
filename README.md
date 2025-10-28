@@ -57,39 +57,39 @@ Basic аутентификацию для программного доступ�
 
 ### Основные endpoints:
 #### Узлы сети (/api/network-nodes/)
-Метод	Endpoint	Описание
-GET	/api/network-nodes/	Список всех узлов
-POST	/api/network-nodes/	Создание узла
-GET	/api/network-nodes/{id}/	Детали узла
-PUT	/api/network-nodes/{id}/	Обновление узла
-DELETE	/api/network-nodes/{id}/	Удаление узла
-GET	/api/network-nodes/{id}/products/	Продукты узла
-POST	/api/network-nodes/{id}/add-product/	Добавить продукт
-DELETE	/api/network-nodes/{id}/remove-product/	Удалить продукт
-GET	/api/network-nodes/{id}/supplier-chain/	Цепочка поставщиков
-GET	/api/network-nodes/{id}/available-supplier-products/	Продукты поставщика
-POST	/api/network-nodes/{id}/clear-debt/	Очистить задолженность
-GET	/api/network-nodes/hierarchy/	Иерархия сети
-GET	/api/network-nodes/statistics/	Статистика
+Метод	    Endpoint	                                                Описание
+GET	        /api/network-nodes/	                                        Список всех узлов
+POST	    /api/network-nodes/                                     	Создание узла
+GET	        /api/network-nodes/{id}/	                                Детали узла
+PUT	        /api/network-nodes/{id}/	                                Обновление узла
+DELETE	    /api/network-nodes/{id}/	                                Удаление узла
+GET	        /api/network-nodes/{id}/products/	                        Продукты узла
+POST    	/api/network-nodes/{id}/add-product/	                    Добавить продукт
+DELETE   	/api/network-nodes/{id}/remove-product/	                    Удалить продукт
+GET	        /api/network-nodes/{id}/supplier-chain/	                    Цепочка поставщиков
+GET	        /api/network-nodes/{id}/available-supplier-products/        Продукты поставщика
+POST	    /api/network-nodes/{id}/clear-debt/	                        Очистить задолженность
+GET	        /api/network-nodes/hierarchy/	                            Иерархия сети
+GET     	/api/network-nodes/statistics/	                            Статистика
 
 #### Продукты (/api/products/)
-Метод	Endpoint	Описание
-GET	/api/products/	Список продуктов
-POST	/api/products/	Создание продукта
-GET	/api/products/{id}/	Детали продукта
-PUT	/api/products/{id}/	Обновление продукта
-DELETE	/api/products/{id}/	Удаление продукта
-POST	/api/products/{id}/assign-to-node/	Назначить узлу
-POST	/api/products/{id}/remove-from-node/	Удалить из узла
-GET	/api/products/in-network/	Продукты в сети
+Метод	    Endpoint	                            Описание
+GET	        /api/products/                      	Список продуктов
+POST	    /api/products/                      	Создание продукта
+GET	        /api/products/{id}/	                    Детали продукта
+PUT	        /api/products/{id}/              	    Обновление продукта
+DELETE	    /api/products/{id}/              	    Удаление продукта
+POST	    /api/products/{id}/assign-to-node/	    Назначить узлу
+POST	    /api/products/{id}/remove-from-node/	Удалить из узла
+GET	        /api/products/in-network/	            Продукты в сети
 
 #### Связи узел-продукт (/api/node-products/)
-Метод	Endpoint	Описание
-GET	/api/node-products/	Список связей
-POST	/api/node-products/	Создание связи
-GET	/api/node-products/{id}/	Детали связи
-PUT	/api/node-products/{id}/	Обновление связи
-DELETE	/api/node-products/{id}/	Удаление связи
+Метод	   Endpoint	                Описание
+GET        /api/node-products/	    Список связей
+POST	   /api/node-products/	    Создание связи
+GET	       /api/node-products/{id}/	Детали связи
+PUT	       /api/node-products/{id}/	Обновление связи
+DELETE	   /api/node-products/{id}/	Удаление связи
 
 ### Фильтрация и поиск
 #### Узлы сети:
@@ -109,7 +109,7 @@ DELETE	/api/node-products/{id}/	Удаление связи
 ### Возможности админ-панели:
 📊 Просмотр всех узлов сети и продуктов
 🔗 Ссылки на поставщиков со страниц узлов
-🏙️ Фильтрация по городам
+🏙️ Фильтрация по городу, стране, типу звена, времени создания
 💰 Admin action для очистки задолженностей
 🔍 Поиск по названиям и email
 

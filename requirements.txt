@@ -16,6 +16,7 @@ crispy-bootstrap5==2025.6
 cron_descriptor==2.0.6
 Django==5.2.7
 django-celery-beat==2.8.1
+django-cors-headers==4.9.0
 django-crispy-forms==2.4
 django-filter==25.2
 django-timezone-field==7.1
